@@ -1,4 +1,5 @@
 import 'package:chatapp/models/UserModel.dart';
+import 'package:chatapp/pages/HomePage.dart';
 import 'package:chatapp/pages/SignUpPage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -46,6 +47,14 @@ class _LoginPageState extends State<LoginPage> {
 
       // Go to HomePage
       print("Log In Successful!");
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) {
+            return HomePage(userModel: userModel, firebaseUser: credential!.user!);
+          }
+        ),
+      );
     }
   }
 
