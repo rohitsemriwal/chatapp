@@ -1,4 +1,5 @@
 import 'package:chatapp/models/UserModel.dart';
+import 'package:chatapp/pages/SearchPage.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -16,8 +17,20 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        centerTitle: true,
+        title: Text("Chat App"),
+      ),
       body: SafeArea(
         child: Container(),
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) {
+            return SearchPage(userModel: widget.userModel, firebaseUser: widget.firebaseUser);
+          }));
+        },
+        child: Icon(Icons.search),
       ),
     );
   }
