@@ -1,3 +1,7 @@
+import 'dart:developer';
+
+import 'package:chatapp/main.dart';
+import 'package:chatapp/models/ChatRoomModel.dart';
 import 'package:chatapp/models/UserModel.dart';
 import 'package:chatapp/pages/ChatRoomPage.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -18,6 +22,39 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
 
   TextEditingController searchController = TextEditingController();
+
+  Future<ChatRoomModel?> getChatroomModel(UserModel targetUser) async {
+    ChatRoomModel? chatRoom;
+
+    QuerySnapshot snapshot = await FirebaseFirestore.instance.collection("chatrooms").where("participants.${widget.userModel.uid}", isEqualTo: true).where("participants.${targetUser.uid}", isEqualTo: true).get();
+
+    if(snapshot.docs.length > 0) {
+      // Fetch the existing one
+      var docData = snapshot.docs[0].data();
+      ChatRoomModel existingChatroom = ChatRoomModel.fromMap(docData as Map<String, dynamic>);
+
+      chatRoom = existingChatroom;
+    }
+    else {
+      // Create a new one
+      ChatRoomModel newChatroom = ChatRoomModel(
+        chatroomid: uuid.v1(),
+        lastMessage: "",
+        participants: {
+          widget.userModel.uid.toString(): true,
+          targetUser.uid.toString(): true,
+        },
+      );
+
+      await FirebaseFirestore.instance.collection("chatrooms").doc(newChatroom.chatroomid).set(newChatroom.toMap());
+
+      chatRoom = newChatroom;
+
+      log("New Chatroom Created!");
+    }
+
+    return chatRoom;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -66,13 +103,22 @@ class _SearchPageState extends State<SearchPage> {
                         UserModel searchedUser = UserModel.fromMap(userMap);
 
                         return ListTile(
-                          onTap: () {
-                            Navigator.pop(context);
-                            Navigator.push(context, MaterialPageRoute(
-                              builder: (context) {
-                                return ChatRoomPage();
-                              }
-                            ));
+                          onTap: () async {
+                            ChatRoomModel? chatroomModel = await getChatroomModel(searchedUser);
+
+                            if(chatroomModel != null) {
+                              Navigator.pop(context);
+                              Navigator.push(context, MaterialPageRoute(
+                                builder: (context) {
+                                  return ChatRoomPage(
+                                    targetUser: searchedUser,
+                                    userModel: widget.userModel,
+                                    firebaseUser: widget.firebaseUser,
+                                    chatroom: chatroomModel,
+                                  );
+                                }
+                              ));
+                            }
                           },
                           leading: CircleAvatar(
                             backgroundImage: NetworkImage(searchedUser.profilepic!),
